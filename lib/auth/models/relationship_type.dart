@@ -1,0 +1,8 @@
+enum RelationshipType {
+  BEST_FRIEND,
+  FRIEND,
+  ACQUAINTANCE,
+  RELATIVE,
+  COWORKER,
+  PARTNER,
+}

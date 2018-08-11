@@ -1,0 +1,13 @@
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Is the user requesting their own data?
+    function isUserRequesting(userId) {
+      return request.auth.uid == userId;
+    }
+
+    match /{userId}/{doc=**} {
+      allow read: if request.auth != null;
+      allow write: if isUserRequesting(userId);
+    }
+  }
+}

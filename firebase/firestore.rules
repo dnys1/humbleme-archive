@@ -1,0 +1,99 @@
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Allow reading of data if its the user getting their own data, or if their
+    // profile is set to 'public' visibility.
+    // At some point we'll add
+    function signedInOrPublic() {
+      return request.auth.uid != null;
+    }
+
+    // Is the user requesting their own data?
+    function isUserRequesting(userId) {
+      return request.auth.uid == userId;
+    }
+
+
+    function userOwnsRequestedDocument() {
+      return resource.data.toUser == request.auth.uid || 
+                resource.data.fromUser == request.auth.uid;
+    }
+
+    match /stats/{stat} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /mindsets/{mindset} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Friend requests are created/deleted on device and then pushed to server
+    match /friendRequests/{request} {
+      allow create: if signedInOrPublic();
+      allow read, update: if userOwnsRequestedDocument();
+      allow delete: if false;
+    }
+
+    // Surveys are created on device, then created on server
+    // After this they are controlled by the server
+    match /surveys/{survey} {
+      allow create: if signedInOrPublic();
+      allow read: if userOwnsRequestedDocument();
+      allow update, delete: if false;
+    }
+
+    // Allow users to create crashReports from their device
+    // Disallow all other queries
+    match /crashReports/{report} {
+      allow read, update, delete: if false;
+      allow create: if signedInOrPublic();
+    }
+
+    // Allow users to read public profiles and their own.
+    // Allow users to update their own profile only.
+    match /users/{userId} {
+        allow read: if signedInOrPublic();
+        allow create, update, delete: if isUserRequesting(userId);
+        match /friends/{friendshipId} {
+          allow read, write: if isUserRequesting(userId);
+        }
+        match /devices/{deviceId} {
+          allow read, write: if isUserRequesting(userId);
+        }
+        // TODO: Add cloud function to retrieve only public values
+        match /scores/{scoreId} {
+          allow read: if signedInOrPublic();
+          allow write: if isUserRequesting(userId);
+        }
+    }
+
+    match /resources/{resourceId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Only allow the server to read/write from questions.
+    // In the app, they're accessed through a HTTPS method, so there
+    // is no need for any user to be able to read them directly.
+    match /questions/{questionId} {
+      allow read, write: if false;
+    }
+
+    match /schools/{schoolId} {
+      allow read: if signedInOrPublic();
+      allow write: if false;
+    }
+
+    match /global/{globalId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read, update, delete: if resource.data.toUser == request.auth.uid;
+      allow create: if false;
+    }
+  }
+}

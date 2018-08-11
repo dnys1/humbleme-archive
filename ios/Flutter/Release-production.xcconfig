@@ -1,0 +1,7 @@
+#include "Pods/Target Support Files/Pods-Runner/Pods-Runner.release-production.xcconfig"
+#include "Generated.xcconfig"
+
+FLUTTER_TARGET=lib/main.release.dart
+FLUTTER_BUILD_MODE=release
+// See: https://github.com/flutter/flutter/wiki/Obfuscating-Dart-Code
+// EXTRA_GEN_SNAPSHOT_OPTIONS=--obfuscate
